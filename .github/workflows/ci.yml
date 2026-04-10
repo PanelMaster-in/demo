@@ -1,34 +1,49 @@
-name: Dependency Install Test
+name: Composer Loop Test
 
 on:
   schedule:
-    - cron: "0 * * * *"  # every hour
+    - cron: "0 * * * *" # every hour
   workflow_dispatch:
 
 jobs:
-  test-install:
+  loop-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up PHP
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
+          tools: composer:v2
 
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Test require packages (dry run style)
+      - name: Run 10 iterations safely
         run: |
           set -e
-          echo "Testing package installation..."
+
+          echo "Starting loop test..."
 
           for i in {1..10}; do
+            echo "=============================="
             echo "Iteration $i"
-            composer require ghostcompiler/hetzner-robot --no-interaction --no-update
-            composer require ghostcompiler/hetzner-cloud --no-interaction --no-update
-            composer create-project ghostcompiler/laravel-react-jsx test-project-$i --no-interaction || true
+            echo "=============================="
+
+            # Create isolated workspace per iteration
+            WORKDIR="build-$i"
+            mkdir -p $WORKDIR
+            cd $WORKDIR
+
+            # Create fresh Laravel project
+            composer create-project ghostcompiler/laravel-react-jsx . --no-interaction
+
+            # Install packages
+            composer require ghostcompiler/hetzner-robot --no-interaction
+            composer require ghostcompiler/hetzner-cloud --no-interaction
+
+            echo "Iteration $i completed"
+            cd ..
           done
+
+          echo "All iterations finished successfully"
