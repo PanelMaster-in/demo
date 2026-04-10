@@ -1,8 +1,8 @@
-name: Composer Loop Test (Fixed + Fast)
+name: Composer Loop Test
 
 on:
   schedule:
-    - cron: "*/45 * * * *"
+    - cron: "*/30 * * * *" # every 30 minutes (NOT random possible in cron)
   workflow_dispatch:
 
 jobs:
@@ -19,63 +19,65 @@ jobs:
           php-version: "8.4"
           tools: composer:v2
 
-      # =========================
-      # Runner info
-      # =========================
-      - name: Collect Runner Info
+      # ---------------- RUNNER INFO ----------------
+      - name: Create Runner Info
         run: |
           echo "RUNNER INFO REPORT" > runner-info.txt
+          echo "==========================" >> runner-info.txt
           echo "Date: $(date)" >> runner-info.txt
           echo "Run ID: $GITHUB_RUN_ID" >> runner-info.txt
           echo "Repo: $GITHUB_REPOSITORY" >> runner-info.txt
+          echo "Workflow: $GITHUB_WORKFLOW" >> runner-info.txt
           echo "Actor: $GITHUB_ACTOR" >> runner-info.txt
+          echo "" >> runner-info.txt
           uname -a >> runner-info.txt
+          echo "" >> runner-info.txt
           free -h >> runner-info.txt
+          echo "" >> runner-info.txt
           df -h >> runner-info.txt
 
-      # =========================
-      # Random delay (MAX 2 MIN)
-      # =========================
-      - name: Random delay
+      # ---------------- RANDOM DELAY (MAX 2 MIN) ----------------
+      - name: Random delay (0–120 sec)
         run: |
           DELAY=$((RANDOM % 120))
           echo "Sleeping for $DELAY seconds..."
           sleep $DELAY
 
-      # =========================
-      # START EMAIL
-      # =========================
-      - name: Send Start Email
+      # ---------------- START NOTIFICATION ----------------
+      - name: Send START email
         uses: dawidd6/action-send-mail@v3
+        if: always()
         with:
           server_address: smtp.gmail.com
           server_port: 465
           secure: true
           username: ${{ secrets.SMTP_EMAIL }}
           password: ${{ secrets.SMTP_PASSWORD }}
+
           to: ${{ secrets.TO_EMAIL }}
+
           from: GitHub Actions
-          subject: "🚀 Started - ${{ github.repository }}"
+          subject: "🚀 Workflow Started - ${{ github.repository }}"
           body: |
             Workflow started
 
             Run ID: ${{ github.run_id }}
             Repo: ${{ github.repository }}
+            Actor: ${{ github.actor }}
 
           attachments: runner-info.txt
 
-      # =========================
-      # MAIN LOOP
-      # =========================
-      - name: Run Composer Loop
+      # ---------------- MAIN LOOP ----------------
+      - name: Run 10 iterations safely
         run: |
           set -e
 
           for i in {1..10}; do
             echo "Iteration $i"
 
-            mkdir build-$i
-            cd build-$i
+            WORKDIR="build-$i"
+            mkdir -p "$WORKDIR"
+            cd "$WORKDIR"
 
             composer create-project ghostcompiler/laravel-react-jsx . --no-interaction
             composer require ghostcompiler/hetzner-robot --no-interaction
@@ -84,10 +86,8 @@ jobs:
             cd ..
           done
 
-      # =========================
-      # SUCCESS EMAIL
-      # =========================
-      - name: Send Success Email
+      # ---------------- SUCCESS EMAIL ----------------
+      - name: Send SUCCESS email
         if: success()
         uses: dawidd6/action-send-mail@v3
         with:
@@ -96,20 +96,19 @@ jobs:
           secure: true
           username: ${{ secrets.SMTP_EMAIL }}
           password: ${{ secrets.SMTP_PASSWORD }}
+
           to: ${{ secrets.TO_EMAIL }}
+
           from: GitHub Actions
-          subject: "✅ Success - ${{ github.repository }}"
+          subject: "✅ Workflow SUCCESS - ${{ github.repository }}"
           body: |
             Workflow completed successfully
 
             Run ID: ${{ github.run_id }}
+            Repo: ${{ github.repository }}
 
-          attachments: runner-info.txt
-
-      # =========================
-      # FAILURE EMAIL
-      # =========================
-      - name: Send Failure Email
+      # ---------------- FAILURE EMAIL ----------------
+      - name: Send FAILURE email
         if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
@@ -118,12 +117,15 @@ jobs:
           secure: true
           username: ${{ secrets.SMTP_EMAIL }}
           password: ${{ secrets.SMTP_PASSWORD }}
+
           to: ${{ secrets.TO_EMAIL }}
+
           from: GitHub Actions
-          subject: "❌ Failed - ${{ github.repository }}"
+          subject: "❌ Workflow FAILED - ${{ github.repository }}"
           body: |
-            Workflow failed
+            Workflow FAILED
 
             Run ID: ${{ github.run_id }}
+            Repo: ${{ github.repository }}
 
-          attachments: runner-info.txt
+            Check logs immediately.
