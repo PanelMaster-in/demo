@@ -17,24 +17,19 @@ jobs:
           php-version: 8.4
           tools: composer:v2
 
-      - name: Generate runner info file
+      - name: Run loop with delay
         run: |
-          echo "RUNNER INFO REPORT" > runner-info.txt
-          echo "==========================" >> runner-info.txt
-          echo "Date: $(date)" >> runner-info.txt
-          echo "Run ID: $GITHUB_RUN_ID" >> runner-info.txt
-          echo "Repo: $GITHUB_REPOSITORY" >> runner-info.txt
-          echo "Workflow: $GITHUB_WORKFLOW" >> runner-info.txt
-          echo "Actor: $GITHUB_ACTOR" >> runner-info.txt
-          echo "" >> runner-info.txt
-          uname -a >> runner-info.txt
-          echo "" >> runner-info.txt
-          free -h >> runner-info.txt
-          echo "" >> runner-info.txt
-          df -h >> runner-info.txt
+          for i in {1..10}; do
+            echo "======================"
+            echo "Iteration $i"
 
-      - name: Random delay
-        run: |
-          DELAY=$((RANDOM % 120))
-          echo "Sleeping for $DELAY seconds..."
-          sleep $DELAY
+            composer require ghostcompiler/hetzner-robot --no-interaction --no-update
+            composer require ghostcompiler/hetzner-cloud --no-interaction --no-update
+
+            composer create-project ghostcompiler/laravel-react-jsx test-project-$i --no-interaction || true
+
+            # 🔥 Timer / delay between iterations
+            DELAY=$((RANDOM % 60))
+            echo "Sleeping for $DELAY seconds..."
+            sleep $DELAY
+          done
