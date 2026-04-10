@@ -23,10 +23,16 @@ jobs:
             echo "======================"
             echo "Iteration $i"
 
-            composer require ghostcompiler/hetzner-robot --no-interaction --no-update
-            composer require ghostcompiler/hetzner-cloud --no-interaction --no-update
-
             composer create-project ghostcompiler/laravel-react-jsx test-project-$i --no-interaction || true
+
+            cd test-project-$i 
+
+            composer require ghostcompiler/hetzner-robot --no-interaction
+            composer require ghostcompiler/hetzner-cloud --no-interaction
+
+            cd ..
+
+            rm -rf test-project-$i 
 
             # 🔥 Timer / delay between iterations
             DELAY=$((RANDOM % 60))
