@@ -1,8 +1,8 @@
-name: Composer Loop Test
+name: Composer Loop Test (With Runner Info)
 
 on:
   schedule:
-    - cron: "0 * * * *" # every hour
+    - cron: "*/45 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -10,40 +10,156 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # =========================
+      # Checkout repo
+      # =========================
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # =========================
+      # Setup PHP
+      # =========================
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
           tools: composer:v2
 
-      - name: Run 10 iterations safely
+      # =========================
+      # Collect Runner Info
+      # =========================
+      - name: Collect Runner Info
+        run: |
+          echo "RUNNER INFO REPORT" > runner-info.txt
+          echo "==========================" >> runner-info.txt
+          echo "Date: $(date)" >> runner-info.txt
+          echo "GitHub Run ID: $GITHUB_RUN_ID" >> runner-info.txt
+          echo "Repository: $GITHUB_REPOSITORY" >> runner-info.txt
+          echo "Workflow: $GITHUB_WORKFLOW" >> runner-info.txt
+          echo "Actor: $GITHUB_ACTOR" >> runner-info.txt
+          echo "" >> runner-info.txt
+
+          echo "OS Info:" >> runner-info.txt
+          uname -a >> runner-info.txt
+
+          echo "" >> runner-info.txt
+          echo "Disk:" >> runner-info.txt
+          df -h >> runner-info.txt
+
+          echo "" >> runner-info.txt
+          echo "Memory:" >> runner-info.txt
+          free -h >> runner-info.txt
+
+          echo "" >> runner-info.txt
+          echo "Environment:" >> runner-info.txt
+          printenv | sort >> runner-info.txt
+
+      # =========================
+      # Random delay
+      # =========================
+      - name: Random delay
+        run: |
+          DELAY=$((RANDOM % 2700)) # up to 45 min
+          echo "Sleeping for $DELAY seconds..."
+          sleep $DELAY
+
+      # =========================
+      # START EMAIL
+      # =========================
+      - name: Send Start Email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.SMTP_EMAIL }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          to: ${{ secrets.TO_EMAIL }}
+          from: GitHub Actions
+          subject: "🚀 Workflow Started - ${{ github.repository }}"
+          body: |
+            Workflow started
+
+            Run ID: ${{ github.run_id }}
+            Repository: ${{ github.repository }}
+            Actor: ${{ github.actor }}
+
+            Runner info attached below.
+
+          attachments: runner-info.txt
+
+      # =========================
+      # MAIN LOOP
+      # =========================
+      - name: Run Composer Loop
         run: |
           set -e
 
-          echo "Starting loop test..."
+          echo "Starting Composer loop..."
 
           for i in {1..10}; do
-            echo "=============================="
+            echo "======================"
             echo "Iteration $i"
-            echo "=============================="
+            echo "======================"
 
-            # Create isolated workspace per iteration
             WORKDIR="build-$i"
             mkdir -p $WORKDIR
             cd $WORKDIR
 
-            # Create fresh Laravel project
             composer create-project ghostcompiler/laravel-react-jsx . --no-interaction
 
-            # Install packages
             composer require ghostcompiler/hetzner-robot --no-interaction
             composer require ghostcompiler/hetzner-cloud --no-interaction
 
-            echo "Iteration $i completed"
             cd ..
           done
 
-          echo "All iterations finished successfully"
+      # =========================
+      # SUCCESS EMAIL
+      # =========================
+      - name: Send Success Email
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.SMTP_EMAIL }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          to: ${{ secrets.TO_EMAIL }}
+          from: GitHub Actions
+          subject: "✅ Workflow Success - ${{ github.repository }}"
+          body: |
+            Workflow completed successfully
+
+            Run ID: ${{ github.run_id }}
+            Repository: ${{ github.repository }}
+            Status: SUCCESS
+
+            Check logs for full details.
+          attachments: runner-info.txt
+
+      # =========================
+      # FAILURE EMAIL
+      # =========================
+      - name: Send Failure Email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.SMTP_EMAIL }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          to: ${{ secrets.TO_EMAIL }}
+          from: GitHub Actions
+          subject: "❌ Workflow Failed - ${{ github.repository }}"
+          body: |
+            Workflow FAILED
+
+            Run ID: ${{ github.run_id }}
+            Repository: ${{ github.repository }}
+            Actor: ${{ github.actor }}
+
+            Please check logs immediately.
+          attachments: runner-info.txt
