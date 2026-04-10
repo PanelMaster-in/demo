@@ -1,26 +1,23 @@
-name: Composer Loop Test
+name: loop-test
 
 on:
-  schedule:
-    - cron: "*/30 * * * *" # every 30 minutes (NOT random possible in cron)
   workflow_dispatch:
 
 jobs:
-  loop-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.4"
+          php-version: 8.4
           tools: composer:v2
 
-      # ---------------- RUNNER INFO ----------------
-      - name: Create Runner Info
+      - name: Generate runner info file
         run: |
           echo "RUNNER INFO REPORT" > runner-info.txt
           echo "==========================" >> runner-info.txt
@@ -36,96 +33,8 @@ jobs:
           echo "" >> runner-info.txt
           df -h >> runner-info.txt
 
-      # ---------------- RANDOM DELAY (MAX 2 MIN) ----------------
-      - name: Random delay (0–120 sec)
+      - name: Random delay
         run: |
           DELAY=$((RANDOM % 120))
           echo "Sleeping for $DELAY seconds..."
           sleep $DELAY
-
-      # ---------------- START NOTIFICATION ----------------
-      - name: Send START email
-        uses: dawidd6/action-send-mail@v3
-        if: always()
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.SMTP_EMAIL }}
-          password: ${{ secrets.SMTP_PASSWORD }}
-
-          to: ${{ secrets.TO_EMAIL }}
-
-          from: GitHub Actions
-          subject: "🚀 Workflow Started - ${{ github.repository }}"
-          body: |
-            Workflow started
-
-            Run ID: ${{ github.run_id }}
-            Repo: ${{ github.repository }}
-            Actor: ${{ github.actor }}
-
-          attachments: runner-info.txt
-
-      # ---------------- MAIN LOOP ----------------
-      - name: Run 10 iterations safely
-        run: |
-          set -e
-
-          for i in {1..10}; do
-            echo "Iteration $i"
-
-            WORKDIR="build-$i"
-            mkdir -p "$WORKDIR"
-            cd "$WORKDIR"
-
-            composer create-project ghostcompiler/laravel-react-jsx . --no-interaction
-            composer require ghostcompiler/hetzner-robot --no-interaction
-            composer require ghostcompiler/hetzner-cloud --no-interaction
-
-            cd ..
-          done
-
-      # ---------------- SUCCESS EMAIL ----------------
-      - name: Send SUCCESS email
-        if: success()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.SMTP_EMAIL }}
-          password: ${{ secrets.SMTP_PASSWORD }}
-
-          to: ${{ secrets.TO_EMAIL }}
-
-          from: GitHub Actions
-          subject: "✅ Workflow SUCCESS - ${{ github.repository }}"
-          body: |
-            Workflow completed successfully
-
-            Run ID: ${{ github.run_id }}
-            Repo: ${{ github.repository }}
-
-      # ---------------- FAILURE EMAIL ----------------
-      - name: Send FAILURE email
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
-          username: ${{ secrets.SMTP_EMAIL }}
-          password: ${{ secrets.SMTP_PASSWORD }}
-
-          to: ${{ secrets.TO_EMAIL }}
-
-          from: GitHub Actions
-          subject: "❌ Workflow FAILED - ${{ github.repository }}"
-          body: |
-            Workflow FAILED
-
-            Run ID: ${{ github.run_id }}
-            Repo: ${{ github.repository }}
-
-            Check logs immediately.
