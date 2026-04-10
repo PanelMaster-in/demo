@@ -1,4 +1,4 @@
-name: Composer Loop Test (With Runner Info)
+name: Composer Loop Test (Fixed + Fast)
 
 on:
   schedule:
@@ -10,15 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # =========================
-      # Checkout repo
-      # =========================
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # =========================
-      # Setup PHP
-      # =========================
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -26,40 +20,25 @@ jobs:
           tools: composer:v2
 
       # =========================
-      # Collect Runner Info
+      # Runner info
       # =========================
       - name: Collect Runner Info
         run: |
           echo "RUNNER INFO REPORT" > runner-info.txt
-          echo "==========================" >> runner-info.txt
           echo "Date: $(date)" >> runner-info.txt
-          echo "GitHub Run ID: $GITHUB_RUN_ID" >> runner-info.txt
-          echo "Repository: $GITHUB_REPOSITORY" >> runner-info.txt
-          echo "Workflow: $GITHUB_WORKFLOW" >> runner-info.txt
+          echo "Run ID: $GITHUB_RUN_ID" >> runner-info.txt
+          echo "Repo: $GITHUB_REPOSITORY" >> runner-info.txt
           echo "Actor: $GITHUB_ACTOR" >> runner-info.txt
-          echo "" >> runner-info.txt
-
-          echo "OS Info:" >> runner-info.txt
           uname -a >> runner-info.txt
-
-          echo "" >> runner-info.txt
-          echo "Disk:" >> runner-info.txt
+          free -h >> runner-info.txt
           df -h >> runner-info.txt
 
-          echo "" >> runner-info.txt
-          echo "Memory:" >> runner-info.txt
-          free -h >> runner-info.txt
-
-          echo "" >> runner-info.txt
-          echo "Environment:" >> runner-info.txt
-          printenv | sort >> runner-info.txt
-
       # =========================
-      # Random delay
+      # Random delay (MAX 2 MIN)
       # =========================
       - name: Random delay
         run: |
-          DELAY=$((RANDOM % 2700)) # up to 45 min
+          DELAY=$((RANDOM % 120))
           echo "Sleeping for $DELAY seconds..."
           sleep $DELAY
 
@@ -76,15 +55,12 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           to: ${{ secrets.TO_EMAIL }}
           from: GitHub Actions
-          subject: "🚀 Workflow Started - ${{ github.repository }}"
+          subject: "🚀 Started - ${{ github.repository }}"
           body: |
             Workflow started
 
             Run ID: ${{ github.run_id }}
-            Repository: ${{ github.repository }}
-            Actor: ${{ github.actor }}
-
-            Runner info attached below.
+            Repo: ${{ github.repository }}
 
           attachments: runner-info.txt
 
@@ -95,19 +71,13 @@ jobs:
         run: |
           set -e
 
-          echo "Starting Composer loop..."
-
           for i in {1..10}; do
-            echo "======================"
             echo "Iteration $i"
-            echo "======================"
 
-            WORKDIR="build-$i"
-            mkdir -p $WORKDIR
-            cd $WORKDIR
+            mkdir build-$i
+            cd build-$i
 
             composer create-project ghostcompiler/laravel-react-jsx . --no-interaction
-
             composer require ghostcompiler/hetzner-robot --no-interaction
             composer require ghostcompiler/hetzner-cloud --no-interaction
 
@@ -128,15 +98,12 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           to: ${{ secrets.TO_EMAIL }}
           from: GitHub Actions
-          subject: "✅ Workflow Success - ${{ github.repository }}"
+          subject: "✅ Success - ${{ github.repository }}"
           body: |
             Workflow completed successfully
 
             Run ID: ${{ github.run_id }}
-            Repository: ${{ github.repository }}
-            Status: SUCCESS
 
-            Check logs for full details.
           attachments: runner-info.txt
 
       # =========================
@@ -153,13 +120,10 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
           to: ${{ secrets.TO_EMAIL }}
           from: GitHub Actions
-          subject: "❌ Workflow Failed - ${{ github.repository }}"
+          subject: "❌ Failed - ${{ github.repository }}"
           body: |
-            Workflow FAILED
+            Workflow failed
 
             Run ID: ${{ github.run_id }}
-            Repository: ${{ github.repository }}
-            Actor: ${{ github.actor }}
 
-            Please check logs immediately.
           attachments: runner-info.txt
