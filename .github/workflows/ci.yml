@@ -19,7 +19,7 @@ jobs:
 
       - name: Run loop with delay
         run: |
-          for i in {1..10}; do
+          for i in {1..25}; do
             echo "======================"
             echo "Iteration $i"
 
@@ -38,7 +38,7 @@ jobs:
             rm -rf test-project-$i 
 
             # 🔥 Timer / delay between iterations
-            DELAY=$((RANDOM % 60))
+            DELAY=$((RANDOM % 10))
             echo "Sleeping for $DELAY seconds..."
             sleep $DELAY
           done
