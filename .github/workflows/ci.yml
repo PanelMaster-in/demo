@@ -29,6 +29,9 @@ jobs:
 
             composer require ghostcompiler/hetzner-robot --no-interaction
             composer require ghostcompiler/hetzner-cloud --no-interaction
+            composer require ghostcompiler/uploads-manager --no-interaction
+            php artisan uploads-manager:install
+            php artisan migrate:refresh
 
             cd ..
 
