@@ -30,8 +30,18 @@ jobs:
             composer require ghostcompiler/hetzner-robot --no-interaction
             composer require ghostcompiler/hetzner-cloud --no-interaction
             composer require ghostcompiler/uploads-manager --no-interaction
+            composer require ghostcompiler/secure-auth --no-interaction
             php artisan uploads-manager:install
             php artisan migrate:refresh
+            php artisan secure-auth:install
+            php artisan migrate
+
+            git clone https://github.com/ghostcompiler/laravel-react-jsx-starter-kit
+            git clone https://github.com/ghostcompiler/hetzner-cloud
+            git clone https://github.com/ghostcompiler/hetzner-robot
+            git clone https://github.com/ghostcompiler/UploadManager
+            git clone https://github.com/ghostcompiler/SecureAuth
+            
 
             cd ..
 
