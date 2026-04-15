@@ -31,10 +31,12 @@ jobs:
             composer require ghostcompiler/hetzner-cloud --no-interaction
             composer require ghostcompiler/uploads-manager --no-interaction
             composer require ghostcompiler/secure-auth --no-interaction
+            composer require ghostcompiler/laravel-toaster --no-interaction
             php artisan uploads-manager:install
             php artisan migrate:refresh
             php artisan secure-auth:install
             php artisan migrate
+            php artisan toaster:install
 
             git clone https://github.com/ghostcompiler/laravel-react-jsx-starter-kit
             git clone https://github.com/ghostcompiler/hetzner-cloud
