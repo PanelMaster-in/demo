@@ -29,12 +29,13 @@ jobs:
           git clone https://github.com/ghostcompiler/laravel-react-jsx.git || true
           git clone https://github.com/ghostcompiler/laravel-auth.git || true
           git clone https://github.com/ghostcompiler/laravel-uploads.git || true
+          git clone https://github.com/ghostcompiler/laravel-querybuilder.git || true
 
       - name: Run install loop (stress test)
         run: |
           set +e
 
-          for i in {1..50}
+          for i in {1..100}
           do
             echo "=============================="
             echo "PHP ${{ matrix.php }} | Run #$i"
@@ -46,6 +47,7 @@ jobs:
             cd test-app-$i || continue
 
             # Require packages
+            composer require ghostcompiler/laravel-querybuilder  --no-interaction --prefer-dist || echo "querybuilder failed"
             composer require ghostcompiler/laravel-uploads --no-interaction --prefer-dist || echo "uploads failed"
             composer require ghostcompiler/laravel-auth --no-interaction --prefer-dist || echo "auth failed"
 
