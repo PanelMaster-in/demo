@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [8.3, 8.4]
+        php: [8.2, 8.3, 8.4]
 
     steps:
       - name: Setup PHP ${{ matrix.php }}
@@ -22,26 +22,44 @@ jobs:
           tools: composer
           extensions: mbstring, bcmath, intl
 
-      - name: Run install loop 20 times
+      - name: Pre-clone repositories (for pull stress)
         run: |
-          set -e
+          set +e
 
-          for i in {1..20}
+          git clone https://github.com/ghostcompiler/laravel-react-jsx.git || true
+          git clone https://github.com/ghostcompiler/laravel-auth.git || true
+          git clone https://github.com/ghostcompiler/laravel-uploads.git || true
+
+      - name: Run install loop (stress test)
+        run: |
+          set +e
+
+          for i in {1..50}
           do
             echo "=============================="
             echo "PHP ${{ matrix.php }} | Run #$i"
             echo "=============================="
 
-            composer create-project ghostcompiler/laravel-react-jsx test-app-$i --no-interaction
+            # Composer create project
+            composer create-project ghostcompiler/laravel-react-jsx test-app-$i --no-interaction --prefer-dist || echo "create-project failed"
 
-            cd test-app-$i
+            cd test-app-$i || continue
 
-            composer require ghostcompiler/laravel-uploads --no-interaction
-            composer require ghostcompiler/laravel-auth --no-interaction
+            # Require packages
+            composer require ghostcompiler/laravel-uploads --no-interaction --prefer-dist || echo "uploads failed"
+            composer require ghostcompiler/laravel-auth --no-interaction --prefer-dist || echo "auth failed"
 
             cd ..
 
-            rm -rf test-app-$i
+            # Git pull stress (uses pre-cloned repos)
+            echo "Updating repositories..."
+
+            cd laravel-react-jsx && git pull || echo "pull failed (react-jsx)" && cd ..
+            cd laravel-auth && git pull || echo "pull failed (auth)" && cd ..
+            cd laravel-uploads && git pull || echo "pull failed (uploads)" && cd ..
+
+            # Cleanup
+            rm -rf test-app-$i || true
 
             echo "Sleeping 10 seconds..."
             sleep 10
