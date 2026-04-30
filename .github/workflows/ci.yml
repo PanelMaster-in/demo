@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [8.2, 8.3, 8.4]
+        php: [8.3, 8.4]
 
     steps:
       - name: Setup PHP ${{ matrix.php }}
@@ -64,5 +64,5 @@ jobs:
             rm -rf test-app-$i || true
 
             echo "Sleeping 10 seconds..."
-            sleep 10
+            sleep 20
           done
