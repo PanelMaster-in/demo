@@ -26,10 +26,13 @@ jobs:
         run: |
           set +e
 
+          git clone https://github.com/ghostcompiler/ghostgrid.git || true
+          git clone https://github.com/ghostcompiler/laravel-model-caching.git || true
           git clone https://github.com/ghostcompiler/laravel-react-jsx.git || true
           git clone https://github.com/ghostcompiler/laravel-auth.git || true
           git clone https://github.com/ghostcompiler/laravel-uploads.git || true
           git clone https://github.com/ghostcompiler/laravel-querybuilder.git || true
+          git clone https://github.com/ghostcompiler/laravel-react-mantime.git || true
 
       - name: Run install loop (stress test)
         run: |
@@ -47,6 +50,9 @@ jobs:
             cd test-app-$i || continue
 
             # Require packages
+            composer require ghostcompiler/ghostgrid  --no-interaction --prefer-dist || echo "ghostgrid failed"
+            composer require ghostcompiler/laravel-model-caching  --no-interaction --prefer-dist || echo "laravel-model-caching failed"
+            composer require ghostcompiler/laravel-react-mantime  --no-interaction --prefer-dist || echo "laravel-react-mantime failed"
             composer require ghostcompiler/laravel-querybuilder  --no-interaction --prefer-dist || echo "querybuilder failed"
             composer require ghostcompiler/laravel-uploads --no-interaction --prefer-dist || echo "uploads failed"
             composer require ghostcompiler/laravel-auth --no-interaction --prefer-dist || echo "auth failed"
