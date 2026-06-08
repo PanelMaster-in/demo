@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [8.3, 8.4]
+        php: [8.3, 8.4, 8.5]
 
     steps:
       - name: Setup PHP ${{ matrix.php }}
@@ -26,13 +26,16 @@ jobs:
         run: |
           set +e
 
-          git clone https://github.com/ghostcompiler/ghostgrid.git || true
-          git clone https://github.com/ghostcompiler/laravel-model-caching.git || true
-          git clone https://github.com/ghostcompiler/laravel-react-jsx.git || true
-          git clone https://github.com/ghostcompiler/laravel-auth.git || true
-          git clone https://github.com/ghostcompiler/laravel-uploads.git || true
-          git clone https://github.com/ghostcompiler/laravel-querybuilder.git || true
-          git clone https://github.com/ghostcompiler/laravel-react-mantime.git || true
+          git clone https://github.com/ghostcompiler/laravel-querybuilder || true
+          git clone https://github.com/ghostcompiler/laravel-react-jsx-boilerplate || true
+          git clone https://github.com/ghostcompiler/laravel-react-jsx-starter-kit || true
+          git clone https://github.com/ghostcompiler/laravel-model-caching || true
+          git clone https://github.com/ghostcompiler/laravel-upload || true
+          git clone https://github.com/ghostcompiler/currency-api-dashboard || true
+          git clone https://github.com/ghostcompiler/sshid-installer || true
+          git clone https://github.com/ghostcompiler/node-manager-pm2 || true
+          git clone https://github.com/ghostcompiler/supervisor-manager || true
+          git clone https://github.com/ghostcompiler/cloudflare-pro || true
 
       - name: Run install loop (stress test)
         run: |
@@ -45,17 +48,15 @@ jobs:
             echo "=============================="
 
             # Composer create project
-            composer create-project ghostcompiler/laravel-react-jsx test-app-$i --no-interaction --prefer-dist || echo "create-project failed"
+            composer create-project ghostcompiler/laravel-react-jsx-boilerplate test-app-$i --no-interaction --prefer-dist || echo "create-project failed"
 
             cd test-app-$i || continue
 
             # Require packages
-            composer require ghostcompiler/ghostgrid  --no-interaction --prefer-dist || echo "ghostgrid failed"
-            composer require ghostcompiler/laravel-model-caching  --no-interaction --prefer-dist || echo "laravel-model-caching failed"
-            composer require ghostcompiler/laravel-react-mantime  --no-interaction --prefer-dist || echo "laravel-react-mantime failed"
-            composer require ghostcompiler/laravel-querybuilder  --no-interaction --prefer-dist || echo "querybuilder failed"
-            composer require ghostcompiler/laravel-uploads --no-interaction --prefer-dist || echo "uploads failed"
-            composer require ghostcompiler/laravel-auth --no-interaction --prefer-dist || echo "auth failed"
+            composer require ghostcompiler/laravel-uploads  --no-interaction --prefer-dist || echo "ghostgrid failed"
+            composer require ghostcompiler/laravel-react-jsx-starter-kit  --no-interaction --prefer-dist || echo "ghostgrid failed"
+            composer require ghostcompiler/laravel-model-caching  --no-interaction --prefer-dist || echo "ghostgrid failed"
+            composer require ghostcompiler/laravel-querybuilder  --no-interaction --prefer-dist || echo "ghostgrid failed"
 
             cd ..
 
