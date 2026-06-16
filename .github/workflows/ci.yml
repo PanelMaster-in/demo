@@ -30,7 +30,7 @@ jobs:
         run: |
           set +e
 
-          for i in {1..1}
+          for i in {1..10}
           do
             echo "=============================="
             echo "PHP ${{ matrix.php }} | Run #$i"
@@ -41,16 +41,37 @@ jobs:
 
             cd test-app-$i || continue
 
-            # Require packages
-            composer require ghostcompiler/laravel-hetzner-robot  --no-interaction --prefer-dist || echo "robot failed"
-            composer require ghostcompiler/laravel-hetzner-storagebox  --no-interaction --prefer-dist || echo "robot failed"
-            composer require ghostcompiler/laravel-hetzner-cloud  --no-interaction --prefer-dist || echo "robot failed"
-            composer require ghostcompiler/laravel-querybuilder  --no-interaction --prefer-dist || echo "robot failed"
-            composer require ghostcompiler/laravel-model-caching  --no-interaction --prefer-dist || echo "robot failed"
-            composer require ghostcompiler/laravel-uploads  --no-interaction --prefer-dist || echo "robot failed"
+            # Define your composer packages
+            packages=(
+              "ghostcompiler/laravel-hetzner-robot"
+              "ghostcompiler/laravel-hetzner-storagebox"
+              "ghostcompiler/laravel-hetzner-cloud"
+              "ghostcompiler/laravel-querybuilder"
+              "ghostcompiler/laravel-model-caching"
+              "ghostcompiler/laravel-uploads"
+            )
 
+            # Shuffle the packages list and decide a random number of packages to install (1 to 5)
+            shuffled=($(shuf -e "${packages[@]}"))
+            num_to_install=$(( RANDOM % 5 + 1 ))
+
+            echo "Randomly installing $num_to_install packages..."
+            for ((j=0; j<num_to_install; j++))
+            do
+              pkg="${shuffled[$j]}"
+              echo "Installing $pkg..."
+              composer require "$pkg" --no-interaction --prefer-dist || echo "Failed to install $pkg"
+            done
+
+            # Stress install other starter templates
             composer create-project ghostcompiler/laravel-react-jsx-starter-kit my-app1 --no-interaction --prefer-dist || echo "starter-kit failed"
             composer create-project ghostcompiler/laravel-react-jsx-boilerplate my-app2 --no-interaction --prefer-dist || echo "starter-kit failed"
+
+            # Stress install NPM library (clears cache to force registry download)
+            echo "Installing bhidu-lang NPM library..."
+            npm cache clean --force
+            npm install -g bhidu-lang --prefer-online --no-audit --no-fund || echo "NPM install failed"
+            npm uninstall -g bhidu-lang || true
 
             cd ..
             echo "Updating repositories..."
@@ -66,7 +87,7 @@ jobs:
           RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${{ github.repository }}/actions/workflows/ci.yml/runs?per_page=100" \
-            | jq -r '.workflow_runs[1:][].id') # Changed from 10 to 1
+            | jq -r '.workflow_runs[1:][].id')
 
           # Delete them in a loop
           for RUN_ID in $RUNS; do
