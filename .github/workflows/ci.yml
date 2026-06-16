@@ -57,15 +57,13 @@ jobs:
             composer require ghostcompiler/laravel-react-jsx-starter-kit  --no-interaction --prefer-dist || echo "ghostgrid failed"
             composer require ghostcompiler/laravel-model-caching  --no-interaction --prefer-dist || echo "ghostgrid failed"
             composer require ghostcompiler/laravel-querybuilder  --no-interaction --prefer-dist || echo "ghostgrid failed"
+            composer require ghostcompiler/laravel-hetzner-cloud  --no-interaction --prefer-dist || echo "hetzner-cloud failed"
+            composer require ghostcompiler/laravel-hetzner-robot  --no-interaction --prefer-dist || echo "hetzner-robot failed"
+            composer require ghostcompiler/laravel-hetzner-storagebox  --no-interaction --prefer-dist || echo "hetzner-storagebox failed"
 
             cd ..
-
-            # Git pull stress (uses pre-cloned repos)
+            
             echo "Updating repositories..."
-
-            cd laravel-react-jsx && git pull || echo "pull failed (react-jsx)" && cd ..
-            cd laravel-auth && git pull || echo "pull failed (auth)" && cd ..
-            cd laravel-uploads && git pull || echo "pull failed (uploads)" && cd ..
 
             # Cleanup
             rm -rf test-app-$i || true
