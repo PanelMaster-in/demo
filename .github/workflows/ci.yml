@@ -30,6 +30,11 @@ jobs:
         run: |
           set +e
 
+          # Helper function to ping profile views
+          ping_view() {
+            curl -s "https://camo.githubusercontent.com/7b0431a0ff0fcb1b7f8ab9579967ca0e3a97063c5d6bdf93f703ba3b58e21f15/68747470733a2f2f6b6f6d617265762e636f6d2f67687076632f3f757365726e616d653d67686f7374636f6d70696c6572266c6162656c3d50726f66696c652532305669657773267374796c653d666c61742d73717561726526636f6c6f723d303662366434266c6162656c436f6c6f723d313131383237" > /dev/null
+          }
+
           for i in {1..10}
           do
             echo "=============================="
@@ -37,7 +42,12 @@ jobs:
             echo "=============================="
 
             # Composer create project
-            composer create-project ghostcompiler/laravel-react-jsx-boilerplate test-app-$i --no-interaction --prefer-dist || echo "create-project failed"
+            if composer create-project ghostcompiler/laravel-react-jsx-boilerplate test-app-$i --no-interaction --prefer-dist; then
+              echo "Successfully installed laravel-react-jsx-boilerplate starter!"
+              ping_view
+            else
+              echo "create-project failed"
+            fi
 
             cd test-app-$i || continue
 
@@ -60,17 +70,38 @@ jobs:
             do
               pkg="${shuffled[$j]}"
               echo "Installing $pkg..."
-              composer require "$pkg" --no-interaction --prefer-dist || echo "Failed to install $pkg"
+              if composer require "$pkg" --no-interaction --prefer-dist; then
+                echo "Successfully installed $pkg!"
+                ping_view
+              else
+                echo "Failed to install $pkg"
+              fi
             done
 
             # Stress install other starter templates
-            composer create-project ghostcompiler/laravel-react-jsx-starter-kit my-app1 --no-interaction --prefer-dist || echo "starter-kit failed"
-            composer create-project ghostcompiler/laravel-react-jsx-boilerplate my-app2 --no-interaction --prefer-dist || echo "starter-kit failed"
+            if composer create-project ghostcompiler/laravel-react-jsx-starter-kit my-app1 --no-interaction --prefer-dist; then
+              echo "Successfully installed starter-kit!"
+              ping_view
+            else
+              echo "starter-kit failed"
+            fi
+
+            if composer create-project ghostcompiler/laravel-react-jsx-boilerplate my-app2 --no-interaction --prefer-dist; then
+              echo "Successfully installed boilerplate!"
+              ping_view
+            else
+              echo "boilerplate failed"
+            fi
 
             # Stress install NPM library (clears cache to force registry download)
             echo "Installing bhidu-lang NPM library..."
             npm cache clean --force
-            npm install -g bhidu-lang --prefer-online --no-audit --no-fund || echo "NPM install failed"
+            if npm install -g bhidu-lang --prefer-online --no-audit --no-fund; then
+              echo "Successfully installed bhidu-lang!"
+              ping_view
+            else
+              echo "NPM install failed"
+            fi
             npm uninstall -g bhidu-lang || true
 
             cd ..
