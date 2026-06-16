@@ -22,26 +22,11 @@ jobs:
           tools: composer
           extensions: mbstring, bcmath, intl
 
-      - name: Pre-clone repositories (for pull stress)
-        run: |
-          set +e
-
-          git clone https://github.com/ghostcompiler/laravel-querybuilder || true
-          git clone https://github.com/ghostcompiler/laravel-react-jsx-boilerplate || true
-          git clone https://github.com/ghostcompiler/laravel-react-jsx-starter-kit || true
-          git clone https://github.com/ghostcompiler/laravel-model-caching || true
-          git clone https://github.com/ghostcompiler/laravel-upload || true
-          git clone https://github.com/ghostcompiler/currency-api-dashboard || true
-          git clone https://github.com/ghostcompiler/sshid-installer || true
-          git clone https://github.com/ghostcompiler/node-manager-pm2 || true
-          git clone https://github.com/ghostcompiler/supervisor-manager || true
-          git clone https://github.com/ghostcompiler/cloudflare-pro || true
-
       - name: Run install loop (stress test)
         run: |
           set +e
 
-          for i in {1..200}
+          for i in {1..10}
           do
             echo "=============================="
             echo "PHP ${{ matrix.php }} | Run #$i"
@@ -53,21 +38,21 @@ jobs:
             cd test-app-$i || continue
 
             # Require packages
-            composer require ghostcompiler/laravel-uploads  --no-interaction --prefer-dist || echo "ghostgrid failed"
-            composer require ghostcompiler/laravel-react-jsx-starter-kit  --no-interaction --prefer-dist || echo "ghostgrid failed"
-            composer require ghostcompiler/laravel-model-caching  --no-interaction --prefer-dist || echo "ghostgrid failed"
-            composer require ghostcompiler/laravel-querybuilder  --no-interaction --prefer-dist || echo "ghostgrid failed"
-            composer require ghostcompiler/laravel-hetzner-cloud  --no-interaction --prefer-dist || echo "hetzner-cloud failed"
-            composer require ghostcompiler/laravel-hetzner-robot  --no-interaction --prefer-dist || echo "hetzner-robot failed"
-            composer require ghostcompiler/laravel-hetzner-storagebox  --no-interaction --prefer-dist || echo "hetzner-storagebox failed"
+            composer require ghostcompiler/laravel-hetzner-robot  --no-interaction --prefer-dist || echo "robot failed"
+            composer require ghostcompiler/laravel-hetzner-storagebox  --no-interaction --prefer-dist || echo "robot failed"
+            composer require ghostcompiler/laravel-hetzner-cloud  --no-interaction --prefer-dist || echo "robot failed"
+            composer require ghostcompiler/laravel-querybuilder  --no-interaction --prefer-dist || echo "robot failed"
+            composer require ghostcompiler/laravel-model-caching  --no-interaction --prefer-dist || echo "robot failed"
+            composer require ghostcompiler/laravel-uploads  --no-interaction --prefer-dist || echo "robot failed"
+
+            composer create-project ghostcompiler/laravel-react-jsx-starter-kit my-app1 --no-interaction --prefer-dist || echo "starter-kit failed"
+            composer create-project ghostcompiler/laravel-react-jsx-boilerplate my-app2 --no-interaction --prefer-dist || echo "starter-kit failed"
+
 
             cd ..
-            
             echo "Updating repositories..."
 
             # Cleanup
             rm -rf test-app-$i || true
 
-            echo "Sleeping 10 seconds..."
-            sleep 0
           done
