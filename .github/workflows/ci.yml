@@ -60,14 +60,13 @@ jobs:
 
           done
 
-      # 2. Automatically clean up older runs (keep only the latest 10)
       - name: Clean up old workflow runs
         run: |
-          # Fetch all runs for this workflow, select everything after the latest 10 runs
+          # Fetch all runs for this workflow, select everything except the active one (index 0)
           RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${{ github.repository }}/actions/workflows/ci.yml/runs?per_page=100" \
-            | jq -r '.workflow_runs[10:][].id') # Added [] to iterate and extract IDs
+            | jq -r '.workflow_runs[1:][].id') # Changed from 10 to 1
 
           # Delete them in a loop
           for RUN_ID in $RUNS; do
