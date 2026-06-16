@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+# 1. Give the GITHUB_TOKEN write access to delete old action runs
+permissions:
+  actions: write 
+
 jobs:
   install-test:
     runs-on: ubuntu-latest
@@ -48,7 +52,6 @@ jobs:
             composer create-project ghostcompiler/laravel-react-jsx-starter-kit my-app1 --no-interaction --prefer-dist || echo "starter-kit failed"
             composer create-project ghostcompiler/laravel-react-jsx-boilerplate my-app2 --no-interaction --prefer-dist || echo "starter-kit failed"
 
-
             cd ..
             echo "Updating repositories..."
 
@@ -56,3 +59,24 @@ jobs:
             rm -rf test-app-$i || true
 
           done
+
+      # 2. Automatically clean up older runs (keep only the latest 10)
+      - name: Clean up old workflow runs
+        run: |
+          # Fetch all runs for this workflow, select everything after the latest 10 runs
+          RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/ci.yml/runs?per_page=100" \
+            | jq -r '.workflow_runs[10:].id')
+
+          # Delete them in a loop
+          for RUN_ID in $RUNS; do
+            if [ "$RUN_ID" != "null" ] && [ -n "$RUN_ID" ]; then
+              echo "Deleting run ID: $RUN_ID"
+              curl -s -X DELETE \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Accept: application/vnd.github+json" \
+                "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID"
+            fi
+          done
+        continue-on-error: true
